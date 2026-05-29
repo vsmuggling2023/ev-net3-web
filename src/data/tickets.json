@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "nombreSolicitante": "Docente María José",
+    "correo": "mariajose@institucion.edu",
+    "categoria": "red",
+    "descripcion": "No hay acceso a internet en el laboratorio de computación del tercer piso.",
+    "impacto": "alto",
+    "urgencia": "alta",
+    "tiempoEstimado": 5,
+    "estado": "pendiente",
+    "prioridad": "Crítica",
+    "fechaCreacion": "2026-05-29T12:00:00.000Z",
+    "id_usuario": 2
+  },
+  {
+    "id": 2,
+    "nombreSolicitante": "Estudiante Carlos Silva",
+    "correo": "csilva@institucion.edu",
+    "categoria": "software",
+    "descripcion": "Problemas para ingresar al aula virtual, mi cuenta dice bloqueada.",
+    "impacto": "medio",
+    "urgencia": "media",
+    "tiempoEstimado": 2,
+    "estado": "en proceso",
+    "prioridad": "Media",
+    "fechaCreacion": "2026-05-29T13:30:00.000Z",
+    "id_usuario": 3
+  },
+  {
+    "id": 3,
+    "nombreSolicitante": "Funcionario Roberto Rojas",
+    "correo": "rrojas@institucion.edu",
+    "categoria": "hardware",
+    "descripcion": "La impresora del departamento de administración no enciende.",
+    "impacto": "bajo",
+    "urgencia": "baja",
+    "tiempoEstimado": 3,
+    "estado": "resuelto",
+    "prioridad": "Baja",
+    "fechaCreacion": "2026-05-29T09:15:00.000Z",
+    "id_usuario": 4
+  }
+]

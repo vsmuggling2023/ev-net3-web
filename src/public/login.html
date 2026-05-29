@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión - HelpDesk Smart Priority</title>
+  <meta name="description" content="Inicie sesión para gestionar tickets de soporte técnico con asignación de prioridad automática inteligente.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/css/styles.css" rel="stylesheet">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .login-container {
+      width: 100%;
+      max-width: 440px;
+      padding: 20px;
+    }
+    .theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+  </style>
+</head>
+<body class="animate-fade-in">
+  <!-- Selector de Tema -->
+  <div class="theme-toggle">
+    <button class="btn btn-sm btn-outline-secondary" id="toggleThemeBtn">🌓 Cambiar Tema</button>
+  </div>
+
+  <div class="login-container">
+    <div class="glass-panel p-5">
+      <div class="text-center mb-4">
+        <!-- Logo -->
+        <img src="/logo/logo.png" alt="HelpDesk Smart Priority" style="max-height: 90px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.1));" id="loginLogo">
+        <h4 class="mt-3 fw-bold">HelpDesk Smart Priority</h4>
+        <p class="text-muted small">Plataforma de soporte institucional</p>
+      </div>
+
+      <form id="loginForm">
+        <div class="mb-3">
+          <label for="nombre" class="form-label fw-medium">Usuario</label>
+          <input type="text" class="form-control" id="nombre" name="nombre" placeholder="ej. estudiante1, admin" required>
+        </div>
+        <div class="mb-4">
+          <label for="contrasena" class="form-label fw-medium">Contraseña</label>
+          <input type="password" class="form-control" id="contrasena" name="contrasena" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary-custom w-100 py-2.5">Iniciar Sesión</button>
+        
+        <div class="alert alert-danger mt-3 d-none" id="errorMsg" role="alert"></div>
+      </form>
+
+      <div class="mt-4 text-center">
+        <hr class="my-3 opacity-10">
+        <small class="text-muted">Credenciales de prueba: <strong>admin / admin123</strong></small>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Gestión del Tema Oscuro / Claro
+    const toggleThemeBtn = document.getElementById('toggleThemeBtn');
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    toggleThemeBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+
+    // Formulario de Login
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorMsg = document.getElementById('errorMsg');
+      const formData = new URLSearchParams(new FormData(e.target));
+
+      try {
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString()
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          window.location.href = data.redirect;
+        } else {
+          errorMsg.classList.remove('d-none');
+          errorMsg.textContent = data.error || 'Usuario o contraseña incorrectos';
+        }
+      } catch (err) {
+        errorMsg.classList.remove('d-none');
+        errorMsg.textContent = 'Error de conexión con el servidor';
+      }
+    });
+  </script>
+</body>
+</html>

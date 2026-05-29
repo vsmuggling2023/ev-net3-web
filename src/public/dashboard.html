@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - HelpDesk Smart Priority</title>
+  <meta name="description" content="Dashboard para la administración de tickets de soporte técnico.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/css/styles.css" rel="stylesheet">
+</head>
+<body class="animate-fade-in">
+  <nav class="navbar navbar-expand navbar-light navbar-custom mb-4 py-3">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="#">
+        <img src="/logo/logo_horizontal.png" alt="HelpSmart" style="max-height: 48px;">
+        <span class="ms-2 fw-bold text-primary">Smart Priority</span>
+      </a>
+      <div class="ms-auto d-flex align-items-center gap-3">
+        <button class="btn btn-sm btn-outline-secondary" id="toggleThemeBtn">🌓 Tema</button>
+        <div class="d-none d-md-block text-end">
+          <span class="d-block fw-bold small" id="userDisplay">—</span>
+          <span class="badge bg-primary text-capitalize" style="font-size: 0.75rem;" id="userRol">—</span>
+        </div>
+        <a href="/logout" class="btn btn-danger btn-sm px-3">Salir</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container pb-5">
+    <!-- Fila de Estadísticas -->
+    <div class="row g-4 mb-4">
+      <div class="col-md-3">
+        <div class="glass-panel stat-card text-start">
+          <span class="text-muted small fw-medium">Total Tickets</span>
+          <div class="stat-value text-primary mt-1" id="statTotal">0</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="glass-panel stat-card text-start">
+          <span class="text-muted small fw-medium">Pendientes</span>
+          <div class="stat-value text-warning mt-1" id="statPendiente">0</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="glass-panel stat-card text-start">
+          <span class="text-muted small fw-medium">Resueltos</span>
+          <div class="stat-value text-success mt-1" id="statResuelto">0</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="glass-panel stat-card text-start">
+          <span class="text-muted small fw-medium">Casos Críticos / Altos</span>
+          <div class="stat-value text-danger mt-1" id="statCritico">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel de Control Principal -->
+    <div class="glass-panel p-4">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+          <h3 class="fw-bold mb-0">Gestión de Tickets</h3>
+          <p class="text-muted small mb-0">Listado completo de solicitudes de soporte técnico y sus prioridades</p>
+        </div>
+        <a href="/ticket-crear.html" class="btn btn-primary-custom">+ Nuevo Ticket</a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table-custom">
+          <thead>
+            <tr class="text-muted small">
+              <th>ID</th>
+              <th>Solicitante</th>
+              <th>Correo</th>
+              <th>Categoría</th>
+              <th>Descripción</th>
+              <th>Prioridad</th>
+              <th>Urgencia / Impacto</th>
+              <th>Estado</th>
+              <th>Tiempo Est.</th>
+              <th>Asignado A</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="ticketsBody">
+            <tr><td colspan="11" class="text-center py-5">Cargando tickets...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Gestión del Tema
+    const toggleThemeBtn = document.getElementById('toggleThemeBtn');
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    toggleThemeBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+
+    // Cargar datos de usuario
+    fetch('/api/usuario')
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(user => {
+        document.getElementById('userDisplay').textContent = user.nombre;
+        document.getElementById('userRol').textContent = user.rol;
+      })
+      .catch(() => {
+        window.location.href = '/login.html';
+      });
+
+    // Función para borrar un ticket
+    async function borrarTicket(id) {
+      if (!confirm('¿Está seguro de que desea eliminar o cerrar este ticket?')) return;
+      try {
+        const res = await fetch(`/tickets/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          cargarTickets();
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (err) {
+        alert('Error de conexión al eliminar el ticket');
+      }
+    }
+
+    // Cargar lista de tickets y calcular estadísticas
+    function cargarTickets() {
+      fetch('/tickets')
+        .then(res => {
+          if (!res.ok) throw new Error();
+          return res.json();
+        })
+        .then(tickets => {
+          const tbody = document.getElementById('ticketsBody');
+          if (tickets.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-5">No hay tickets registrados.</td></tr>';
+            actualizarEstadisticas([]);
+            return;
+          }
+
+          tbody.innerHTML = tickets.map(t => {
+            let priorityClass = 'priority-baja';
+            if (t.prioridad === 'Crítica') priorityClass = 'priority-critica';
+            else if (t.prioridad === 'Alta') priorityClass = 'priority-alta';
+            else if (t.prioridad === 'Media') priorityClass = 'priority-media';
+
+            let estadoBadge = 'bg-secondary';
+            if (t.estado === 'resuelto') estadoBadge = 'bg-success';
+            else if (t.estado === 'en proceso') estadoBadge = 'bg-primary';
+
+            return `
+              <tr>
+                <td class="fw-bold">#${t.id}</td>
+                <td class="fw-medium">${t.nombreSolicitante}</td>
+                <td class="small text-muted">${t.correo}</td>
+                <td><span class="badge bg-light text-dark text-capitalize px-2 py-1">${t.categoria}</span></td>
+                <td class="small" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.descripcion}</td>
+                <td><span class="badge-custom ${priorityClass}">${t.prioridad}</span></td>
+                <td class="small text-muted text-capitalize">${t.urgencia} / ${t.impacto}</td>
+                <td><span class="badge ${estadoBadge} text-capitalize px-2 py-1">${t.estado}</span></td>
+                <td>${t.tiempoEstimado ? t.tiempoEstimado + ' hrs' : '—'}</td>
+                <td>${t.usuario_asignado || '—'}</td>
+                <td class="text-end">
+                  <div class="d-inline-flex gap-2">
+                    <a href="/ticket-editar.html?id=${t.id}" class="btn btn-sm btn-outline-warning">Editar</a>
+                    <button onclick="borrarTicket(${t.id})" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('');
+
+          actualizarEstadisticas(tickets);
+        })
+        .catch(err => {
+          document.getElementById('ticketsBody').innerHTML = '<tr><td colspan="11" class="text-center text-danger py-5">Error al cargar tickets del servidor</td></tr>';
+        });
+    }
+
+    function actualizarEstadisticas(tickets) {
+      document.getElementById('statTotal').textContent = tickets.length;
+      document.getElementById('statPendiente').textContent = tickets.filter(t => t.estado === 'pendiente' || t.estado === 'Pendiente').length;
+      document.getElementById('statResuelto').textContent = tickets.filter(t => t.estado === 'resuelto' || t.estado === 'Resuelto').length;
+      document.getElementById('statCritico').textContent = tickets.filter(t => t.prioridad === 'Crítica' || t.prioridad === 'Alta').length;
+    }
+
+    // Inicializar
+    cargarTickets();
+  </script>
+</body>
+</html>

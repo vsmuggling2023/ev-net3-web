@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "nombre": "admin",
+    "contrasena": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+    "rol": "Administrador"
+  },
+  {
+    "id": 2,
+    "nombre": "docente1",
+    "contrasena": "9228105f4ea40ae4b70fde55ee2caf4495c1f188333c41ef566417ab04819f56",
+    "rol": "Docente"
+  },
+  {
+    "id": 3,
+    "nombre": "estudiante1",
+    "contrasena": "2e63a1090735f47213fea3b974418e3e42437325f313b3d3d2f6238cc22298f9",
+    "rol": "Estudiante"
+  },
+  {
+    "id": 4,
+    "nombre": "funcionario1",
+    "contrasena": "7518bf8351a8f37fa81af57478c4a12765e55b003165d330b540c202667a4847",
+    "rol": "Funcionario"
+  }
+]

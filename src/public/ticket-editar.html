@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar Ticket - HelpDesk Smart Priority</title>
+  <meta name="description" content="Formulario para la edición de tickets de soporte técnico registrados.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/css/styles.css" rel="stylesheet">
+</head>
+<body class="animate-fade-in">
+  <nav class="navbar navbar-expand navbar-light navbar-custom mb-4 py-3">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="/dashboard.html">
+        <img src="/logo/logo_horizontal.png" alt="HelpSmart" style="max-height: 48px;">
+        <span class="ms-2 fw-bold text-primary">Smart Priority</span>
+      </a>
+      <div class="ms-auto">
+        <a href="/dashboard.html" class="btn btn-outline-secondary btn-sm px-4">Volver al Dashboard</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container pb-5">
+    <div class="row g-4 justify-content-center">
+      <div class="col-lg-8">
+        <div class="glass-panel p-5">
+          <h3 class="fw-bold mb-4">Editar Detalles del Ticket <span id="lblTicketId" class="text-primary">#...</span></h3>
+          
+          <form id="ticketForm">
+            <!-- Nombre y Correo -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="nombreSolicitante" class="form-label fw-medium">Nombre del Solicitante</label>
+                <input type="text" class="form-control" id="nombreSolicitante" name="nombreSolicitante" required>
+              </div>
+              <div class="col-md-6">
+                <label for="correo" class="form-label fw-medium">Correo Electrónico</label>
+                <input type="email" class="form-control" id="correo" name="correo" required>
+              </div>
+            </div>
+
+            <!-- Categoría, Impacto, Urgencia -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label for="categoria" class="form-label fw-medium">Categoría</label>
+                <select class="form-select" id="categoria" name="categoria" required>
+                  <option value="hardware">Hardware</option>
+                  <option value="software">Software</option>
+                  <option value="red">Red</option>
+                  <option value="cuenta">Cuenta</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="impacto" class="form-label fw-medium">Impacto</label>
+                <select class="form-select" id="impacto" name="impacto" required>
+                  <option value="bajo">Bajo</option>
+                  <option value="medio">Medio</option>
+                  <option value="alto">Alto</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="urgencia" class="form-label fw-medium">Urgencia</label>
+                <select class="form-select" id="urgencia" name="urgencia" required>
+                  <option value="baja">Baja</option>
+                  <option value="media">Media</option>
+                  <option value="alta">Alta</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Descripción -->
+            <div class="mb-3">
+              <label for="descripcion" class="form-label fw-medium">Descripción del Problema</label>
+              <textarea class="form-control" id="descripcion" name="descripcion" rows="4" required></textarea>
+            </div>
+
+            <!-- Asignación, Tiempo Estimado, Estado -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label for="id_usuario" class="form-label fw-medium">Asignar A</label>
+                <select class="form-select" id="id_usuario" name="id_usuario" required>
+                  <option value="">Cargando técnicos...</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="estado" class="form-label fw-medium">Estado del Ticket</label>
+                <select class="form-select" id="estado" name="estado" required>
+                  <option value="pendiente">Pendiente</option>
+                  <option value="en proceso">En proceso</option>
+                  <option value="resuelto">Resuelto</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="tiempoEstimado" class="form-label fw-medium">Tiempo Estimado (Horas)</label>
+                <input type="number" step="0.25" class="form-control" id="tiempoEstimado" name="tiempoEstimado">
+              </div>
+            </div>
+
+            <!-- Previsualización Dinámica de Prioridad -->
+            <div class="glass-panel p-3 mb-4 text-center border-primary bg-light">
+              <span class="text-muted small d-block">Cálculo en Tiempo Real de Prioridad</span>
+              <div class="d-flex align-items-center justify-content-center gap-3 mt-2">
+                <span class="fs-5 fw-bold">Puntaje: <span id="previewScore">0</span></span>
+                <span class="badge-custom priority-baja" id="previewBadge">Baja</span>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary-custom w-100 py-2.5">Guardar Modificaciones del Ticket</button>
+          </form>
+          <div id="mensaje" class="mt-3"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Gestión del Tema
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    const params = new URLSearchParams(window.location.search);
+    const ticketId = params.get('id');
+
+    if (!ticketId) {
+      window.location.href = '/dashboard.html';
+    }
+
+    document.getElementById('lblTicketId').textContent = `#${ticketId}`;
+
+    // Recalcular Prioridad Local
+    function recalcularPrioridadEnPantalla() {
+      const impacto = document.getElementById('impacto').value;
+      const urgencia = document.getElementById('urgencia').value;
+      const categoria = document.getElementById('categoria').value;
+      const tiempoEstimado = parseFloat(document.getElementById('tiempoEstimado').value) || 0;
+
+      let impactoPuntos = 0;
+      if (impacto === 'bajo') impactoPuntos = 1;
+      else if (impacto === 'medio') impactoPuntos = 2;
+      else if (impacto === 'alto') impactoPuntos = 3;
+
+      let urgenciaPuntos = 0;
+      if (urgencia === 'baja') urgenciaPuntos = 1;
+      else if (urgencia === 'media') urgenciaPuntos = 2;
+      else if (urgencia === 'alta') urgenciaPuntos = 3;
+
+      let bonusCat = (categoria === 'red' || categoria === 'cuenta') ? 1 : 0;
+      let bonusT = tiempoEstimado > 4 ? 1 : 0;
+
+      const total = impactoPuntos + urgenciaPuntos + bonusCat + bonusT;
+
+      let prioridad = 'Baja';
+      let badgeClass = 'priority-baja';
+
+      if (total >= 7) {
+        prioridad = 'Crítica';
+        badgeClass = 'priority-critica';
+      } else if (total === 6) {
+        prioridad = 'Alta';
+        badgeClass = 'priority-alta';
+      } else if (total >= 4) {
+        prioridad = 'Media';
+        badgeClass = 'priority-media';
+      }
+
+      const previewBadge = document.getElementById('previewBadge');
+      previewBadge.textContent = prioridad;
+      previewBadge.className = `badge-custom ${badgeClass}`;
+      document.getElementById('previewScore').textContent = total;
+    }
+
+    // Escuchadores de eventos
+    document.getElementById('impacto').addEventListener('change', recalcularPrioridadEnPantalla);
+    document.getElementById('urgencia').addEventListener('change', recalcularPrioridadEnPantalla);
+    document.getElementById('categoria').addEventListener('change', recalcularPrioridadEnPantalla);
+    document.getElementById('tiempoEstimado').addEventListener('input', recalcularPrioridadEnPantalla);
+
+    // Cargar datos iniciales
+    async function cargarDatos() {
+      const [usuariosRes, ticketRes] = await Promise.all([
+        fetch('/api/usuarios'),
+        fetch(`/tickets/${ticketId}`)
+      ]);
+
+      if (!usuariosRes.ok || !ticketRes.ok) {
+        throw new Error('Error al descargar información del servidor.');
+      }
+
+      const usuarios = await usuariosRes.json();
+      const ticket = await ticketRes.json();
+
+      const select = document.getElementById('id_usuario');
+      select.innerHTML = '<option value="">Seleccione encargado...</option>';
+      usuarios.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.textContent = `${u.nombre} (${u.rol})`;
+        if (u.id === ticket.id_usuario) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      document.getElementById('nombreSolicitante').value = ticket.nombreSolicitante;
+      document.getElementById('correo').value = ticket.correo;
+      document.getElementById('categoria').value = ticket.categoria;
+      document.getElementById('descripcion').value = ticket.descripcion;
+      document.getElementById('impacto').value = ticket.impacto;
+      document.getElementById('urgencia').value = ticket.urgencia;
+      document.getElementById('estado').value = ticket.estado.toLowerCase();
+      document.getElementById('tiempoEstimado').value = ticket.tiempoEstimado || '';
+
+      recalcularPrioridadEnPantalla();
+    }
+
+    cargarDatos().catch((err) => {
+      document.getElementById('mensaje').innerHTML = '<div class="alert alert-danger">Error al cargar los datos del ticket</div>';
+    });
+
+    // Formulario de edición
+    document.getElementById('ticketForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      const mensaje = document.getElementById('mensaje');
+      const formData = new URLSearchParams(new FormData(e.target));
+
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      try {
+        const res = await fetch(`/tickets/${ticketId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString()
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          mensaje.innerHTML = '<div class="alert alert-success mt-3">¡Ticket de soporte actualizado correctamente!</div>';
+          setTimeout(() => window.location.href = '/dashboard.html', 1200);
+        } else {
+          mensaje.innerHTML = `<div class="alert alert-danger mt-3">${data.error || 'Ocurrió un error al guardar.'}</div>`;
+        }
+      } catch (err) {
+        mensaje.innerHTML = '<div class="alert alert-danger mt-3">Error de comunicación con el servidor.</div>';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Guardar Modificaciones del Ticket';
+      }
+    });
+  </script>
+</body>
+</html>
