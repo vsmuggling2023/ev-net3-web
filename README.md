@@ -134,7 +134,7 @@ Puedes configurar las siguientes variables de entorno en tu sistema o mediante u
 2. Crea la base de datos `helpsmart` y ejecuta el script SQL provisto arriba para crear las tablas e insertar el usuario administrador.
 3. Abre la terminal en el directorio raíz del proyecto e instala las dependencias necesarias:
    ```bash
-   npm install
+   npm install express express-session mysql2 cheerio
    ```
 4. Ejecuta el servidor:
    ```bash
